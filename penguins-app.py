@@ -5,31 +5,29 @@ import pickle
 from sklearn.ensemble import RandomForestClassifier
 
 st.write("""
-# Penguin Prediction App
+# Aplikasi Prediksi Pinguin 
 
-This app predicts the **Palmer Penguin** species!
-
-Data obtained from the [palmerpenguins library](https://github.com/allisonhorst/palmerpenguins) in R by Allison Horst.
+Aplikasi web ini memprediksi spesies penguin dengan input kriteria mereka (panjang paruh, lebar paruh, panjang sirip, massa tubuh, jenis kelamin, dan pulau). Data didapat dari  [Palmer Penguins library](https://github.com/allisonhorst/palmerpenguins) dalam R oleh Allison Horst.
 """)
 
-st.sidebar.header('User Input Features')
+st.sidebar.header('Fitur Input Pengguna')
 
 st.sidebar.markdown("""
-[Example CSV input file](https://raw.githubusercontent.com/dataprofessor/data/master/penguins_example.csv)
+[Contoh file CSV](https://raw.githubusercontent.com/dataprofessor/data/master/penguins_example.csv)
 """)
 
-# Collects user input features into dataframe
-uploaded_file = st.sidebar.file_uploader("Upload your input CSV file", type=["csv"])
+# Mengumpulkan fitur input pengguna ke dalam dataframe
+uploaded_file = st.sidebar.file_uploader("Unggah file bertipe CSV", type=["csv"])
 if uploaded_file is not None:
     input_df = pd.read_csv(uploaded_file)
 else:
     def user_input_features():
-        island = st.sidebar.selectbox('Island',('Biscoe','Dream','Torgersen'))
-        sex = st.sidebar.selectbox('Sex',('male','female'))
-        bill_length_mm = st.sidebar.slider('Bill length (mm)', 32.1,59.6,43.9)
-        bill_depth_mm = st.sidebar.slider('Bill depth (mm)', 13.1,21.5,17.2)
-        flipper_length_mm = st.sidebar.slider('Flipper length (mm)', 172.0,231.0,201.0)
-        body_mass_g = st.sidebar.slider('Body mass (g)', 2700.0,6300.0,4207.0)
+        island = st.sidebar.selectbox('Pulau',('Biscoe','Dream','Torgersen'))
+        sex = st.sidebar.selectbox('Kelamin',('male','female'))
+        bill_length_mm = st.sidebar.slider('Panjang Paruh (mm)', 32.1,59.6,43.9)
+        bill_depth_mm = st.sidebar.slider('Kedalaman Paruh (mm)', 13.1,21.5,17.2)
+        flipper_length_mm = st.sidebar.slider('Panjang Sirip (mm)', 172.0,231.0,201.0)
+        body_mass_g = st.sidebar.slider('Massa tubuh (g)', 2700.0,6300.0,4207.0)
         data = {'island': island,
                 'bill_length_mm': bill_length_mm,
                 'bill_depth_mm': bill_depth_mm,
@@ -40,41 +38,41 @@ else:
         return features
     input_df = user_input_features()
 
-# Combines user input features with entire penguins dataset
-# This will be useful for the encoding phase
+# Menggabungkan fitur input pengguna dengan seluruh kumpulan data penguin
+# berguna untuk fase pengkodean
 penguins_raw = pd.read_csv('https://raw.githubusercontent.com/dataprofessor/data/master/penguins_cleaned.csv')
 penguins = penguins_raw.drop(columns=['species'], axis=1)
 df = pd.concat([input_df,penguins],axis=0)
 
-# Encoding of ordinal features
+# Pengodean fitur ordinal
 # https://www.kaggle.com/pratik1120/penguin-dataset-eda-classification-and-clustering
 encode = ['sex','island']
 for col in encode:
     dummy = pd.get_dummies(df[col], prefix=col)
     df = pd.concat([df,dummy], axis=1)
     del df[col]
-df = df[:1] # Selects only the first row (the user input data)
+df = df[:1] # Hanya memilih baris pertama (data input pengguna)
 
-# Displays the user input features
-st.subheader('User Input features')
+# Menampilkan Fitur Input Pengguna
+st.subheader('Fitur Input Pengguna')
 
 if uploaded_file is not None:
     st.write(df)
 else:
-    st.write('Awaiting CSV file to be uploaded. Currently using example input parameters (shown below).')
+    st.write('Menunggu file CSV untuk diunggah. Saat ini menggunakan contoh parameter input (ditunjukkan di bawah).')
     st.write(df)
 
-# Reads in saved classification model
+# Membaca model klasifikasi yang tersimpan
 load_clf = pickle.load(open('penguins_clf.pkl', 'rb'))
 
-# Apply model to make predictions
+# Pengaplikasian model untuk membuat prediksi
 prediction = load_clf.predict(df)
 prediction_proba = load_clf.predict_proba(df)
 
 
-st.subheader('Prediction')
+st.subheader('Prediksi')
 penguins_species = np.array(['Adelie','Chinstrap','Gentoo'])
 st.write(penguins_species[prediction])
 
-st.subheader('Prediction Probability')
+st.subheader('Probabilitas Prediksi')
 st.write(prediction_proba)
